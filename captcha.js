@@ -1,15 +1,3 @@
-function resetZoomCaptcha() {
-    var viewportMeta = document.querySelector('meta[name="viewport"]');
-    if (viewportMeta) {
-        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-    } else {
-        viewportMeta = document.createElement('meta');
-        viewportMeta.name = 'viewport';
-        viewportMeta.content = 'width=device-width, initial-scale=1.0';
-        document.head.appendChild(viewportMeta);
-    }
-}
-
 function initializeCaptcha(formsWithCaptcha) {
     document.body.appendChild(document.createElement("captcha-component"));
     const captchaComponent = document.querySelector("captcha-component");
@@ -359,7 +347,6 @@ class CaptchaComponent extends HTMLElement {
 
 
     displayCaptcha() {
-        resetZoomCaptcha();
         this.dialog.showModal();
     }
 
