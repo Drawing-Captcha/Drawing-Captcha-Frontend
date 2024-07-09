@@ -303,8 +303,8 @@ class CaptchaComponent extends HTMLElement {
                 }
             
                 .canvas {
-                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 0.9em)) !important;
-                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 0.9em)) !important;
+                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 0.85em)) !important;
+                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 0.85em)) !important;
                 }
             }
         `;
