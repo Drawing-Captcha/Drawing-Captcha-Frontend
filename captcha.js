@@ -149,7 +149,7 @@ class CaptchaComponent extends HTMLElement {
             .captcha-container {
                 color: var(--drawing-captcha-container-color, white);
                 font-family: var(--drawing-captcha-container-font, Arial, Helvetica, sans-serif);
-                max-width: var(--drawing-captcha-container-max-width, 32em);
+                max-width: var(--drawing-captcha-container-max-width, 40em);
                 width: var(--drawing-captcha-container-width, auto);
                 display: flex;
                 flex-direction: column;
@@ -196,8 +196,8 @@ class CaptchaComponent extends HTMLElement {
             
             .canvas {
                 display: grid;
-                grid-template-columns: var(--drawing-captcha-canvas-grid-columns, repeat(31, 1em));
-                grid-template-rows: var(--drawing-captcha-canvas-grid-rows, repeat(31, 1em));
+                grid-template-columns: var(--drawing-captcha-canvas-grid-columns, repeat(31, 1.2em));
+                grid-template-rows: var(--drawing-captcha-canvas-grid-rows, repeat(31, 1.2em));
                 border: var(--drawing-captcha-canvas-border, 3px solid black);
                 border-radius: var(--drawing-captcha-canvas-border-radius, 5px);
                 max-width: var(--drawing-captcha-canvas-max-width, 100%);
@@ -295,6 +295,34 @@ class CaptchaComponent extends HTMLElement {
             }
             
             @media screen and (max-width: 500px) {
+                .captcha-container {
+                    max-width: var(--drawing-captcha-captcha-container-max-width-small, 39em);
+                    padding: var(--drawing-captcha-captcha-container-padding-small, 4%);
+                    margin: var(--drawing-captcha-captcha-container-margin-small, 1em);
+
+                }
+            
+                .canvas {
+                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 1.1em)) !important;
+                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 1.1em)) !important;
+                }
+            }
+
+            @media screen and (max-width: 480px) {
+                .captcha-container {
+                    max-width: var(--drawing-captcha-captcha-container-max-width-small, 39em);
+                    padding: var(--drawing-captcha-captcha-container-padding-small, 4%);
+                    margin: var(--drawing-captcha-captcha-container-margin-small, 1em);
+
+                }
+            
+                .canvas {
+                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 1em)) !important;
+                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 1em)) !important;
+                }
+            }
+
+            @media screen and (max-width: 440px) {
                 .captcha-container {
                     max-width: var(--drawing-captcha-captcha-container-max-width-small, 39em);
                     padding: var(--drawing-captcha-captcha-container-padding-small, 4%);
@@ -476,71 +504,77 @@ class CaptchaComponent extends HTMLElement {
 
 
     async submit() {
-        const selectedCubes = Array.from(this.shadowRoot.querySelectorAll('.cube')).filter(cube => cube.classList.contains('selected'));
+        const selectedCubes = Array.from(this.shadowRoot.querySelectorAll('.cube'))
+            .filter(cube => cube.classList.contains('selected'));
         const selectedIds = selectedCubes.map(cube => cube.id);
-        const countFields = this.shadowRoot.querySelector('.canvas').childElementCount;
-
-        fetch(`${CaptchaServerWithPort}/captcha/checkCubes`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ selectedIds: selectedIds, clientData: this.clientData, apiKey: CaptchaHiddenAPIKey, session: await this.getSession() })
-        })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Fehler bei der Serveranfrage.');
-                }
-            })
-            .then(data => {
-                if (data.isValid) {
-                    alert("Validierung erfolgreich!");
-                    var valid = true;
-                    this.validateCaptcha(data.isValid);
-
-                } else {
-                    alert("Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Auswahl.");
-                    this.validateCaptcha(data.isValid);
-
-                }
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                alert('Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.');
+    
+        try {
+            const response = await fetch(`${CaptchaServerWithPort}/captcha/checkCubes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    selectedIds: selectedIds,
+                    clientData: this.clientData,
+                    apiKey: CaptchaHiddenAPIKey,
+                    session: await this.getSession()
+                })
             });
-
+    
+            if (!response.ok) {
+                throw new Error('Server request failed.');
+            }
+    
+            const data = await response.json();
+            
+            if (data.isValid) {
+                alert("Validation successful!");
+                this.validateCaptcha(true);
+            } else {
+                alert("Validation failed. Please check your selection.");
+                this.validateCaptcha(false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again later.');
+        }
     }
-
-    displayCaptchaAndSubmit(form) {
-        if (!this.captchaValidated) {
+    
+    async isCaptchaStillValid() {
+        const response = await fetch(`${CaptchaServerWithPort}/captcha/check-captcha`);
+        const data = await response.json();
+        return data.valid;
+    }
+    
+    async displayCaptchaAndSubmit(form) {
+        const isValid = await this.isCaptchaStillValid();
+        if (isValid) {
+            form.submit();
+        } else {
             this.displayCaptcha();
             this.addEventListener("captchaValidated", function () {
                 this.captchaValidated = true;
                 form.submit();
             }, { once: true });
+        }
+    }
+
+    async validateCaptcha(isValid) {
+        if (isValid) {
+            this.removeCaptcha();
+            const captchaEvent = new Event("captchaValidated");
+            this.captchaValidated = true;
+            this.dispatchEvent(captchaEvent);
         } else {
-            form.submit();
+            this.captchaFailed();
         }
     }
-
-    async validateCaptcha(data) {
-        if (data != null) {
-            if (data) {
-                this.removeCaptcha();
-                const captchaEvent = new Event("captchaValidated");
-                this.captchaValidated = true;
-                this.dispatchEvent(captchaEvent);
-
-            } else {
-                this.captchaFailed();
-            }
-        }
-    }
+    
 
     async getSession() {
         const sessionString = sessionStorage.getItem("session");
+        console.log("session: ", sessionString);
         if (sessionString) {
             return JSON.parse(sessionString);
         } else {
