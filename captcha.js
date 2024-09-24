@@ -149,7 +149,7 @@ class CaptchaComponent extends HTMLElement {
             .captcha-container {
                 color: var(--drawing-captcha-container-color, white);
                 font-family: var(--drawing-captcha-container-font, Arial, Helvetica, sans-serif);
-                max-width: var(--drawing-captcha-container-max-width, 32em);
+                max-width: var(--drawing-captcha-container-max-width, 40em);
                 width: var(--drawing-captcha-container-width, auto);
                 display: flex;
                 flex-direction: column;
@@ -196,8 +196,8 @@ class CaptchaComponent extends HTMLElement {
             
             .canvas {
                 display: grid;
-                grid-template-columns: var(--drawing-captcha-canvas-grid-columns, repeat(31, 1em));
-                grid-template-rows: var(--drawing-captcha-canvas-grid-rows, repeat(31, 1em));
+                grid-template-columns: var(--drawing-captcha-canvas-grid-columns, repeat(31, 1.2em));
+                grid-template-rows: var(--drawing-captcha-canvas-grid-rows, repeat(31, 1.2em));
                 border: var(--drawing-captcha-canvas-border, 3px solid black);
                 border-radius: var(--drawing-captcha-canvas-border-radius, 5px);
                 max-width: var(--drawing-captcha-canvas-max-width, 100%);
@@ -303,6 +303,34 @@ class CaptchaComponent extends HTMLElement {
                 }
             
                 .canvas {
+                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 1.1em)) !important;
+                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 1.1em)) !important;
+                }
+            }
+
+            @media screen and (max-width: 480px) {
+                .captcha-container {
+                    max-width: var(--drawing-captcha-captcha-container-max-width-small, 39em);
+                    padding: var(--drawing-captcha-captcha-container-padding-small, 4%);
+                    margin: var(--drawing-captcha-captcha-container-margin-small, 1em);
+
+                }
+            
+                .canvas {
+                    grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 1em)) !important;
+                    grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 1em)) !important;
+                }
+            }
+
+            @media screen and (max-width: 440px) {
+                .captcha-container {
+                    max-width: var(--drawing-captcha-captcha-container-max-width-small, 39em);
+                    padding: var(--drawing-captcha-captcha-container-padding-small, 4%);
+                    margin: var(--drawing-captcha-captcha-container-margin-small, 1em);
+
+                }
+            
+                .canvas {
                     grid-template-columns: var(--drawing-captcha-canvas-small-grid-columns, repeat(31, 0.79em)) !important;
                     grid-template-rows: var(--drawing-captcha-canvas-small-grid-rows, repeat(31, 0.79em)) !important;
                 }
@@ -345,7 +373,6 @@ class CaptchaComponent extends HTMLElement {
 
     }
 
-
     displayCaptcha() {
         this.dialog.showModal();
     }
@@ -374,7 +401,7 @@ class CaptchaComponent extends HTMLElement {
     }
     async getAssets() {
         try {
-            const response = await fetch(`${CaptchaServerWithPort}/captcha/getAssets`, {
+            const response = await fetch(`${CaptchaServerWithPort}/captcha/assets`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -384,15 +411,15 @@ class CaptchaComponent extends HTMLElement {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.clientData) {
-                    this.clientData = data.clientData;
-                    this.assets = data;
+                if (data.client) {
+                    this.client  = data.client
+                    this.assets = data.client.itemAssets;
                     const backgroundImageUrl = this.assets.finishedURL;
                     const background = this.captchaCanvas;
-                    const itemAssets = this.assets.itemAssets
+                    const itemAssets = this.assets
                     background.style.backgroundImage = `url(${CaptchaServerWithPort}${backgroundImageUrl})`;
                     background.style.backgroundSize = `${itemAssets.backgroundSize}%`;
-                    this.saveSession(data.session);
+                    this.saveSession(data.client);
 
                     if(itemAssets.itemTitle.length > 0) {
                         this.captchaTitle.textContent = itemAssets.itemTitle;
@@ -465,7 +492,6 @@ class CaptchaComponent extends HTMLElement {
             console.error('Error fetching color kit:', error);
         }
     }
-
     async applyColorKitStylings() {
         this.colorKitTitle = this.colorKit.defaultTitle ? this.colorKit.defaultTitle : "Testing Verison"
         this.buttonColor = this.colorKit.buttonColorValue ? this.colorKit.buttonColorValue : "#007BFF"
@@ -473,71 +499,83 @@ class CaptchaComponent extends HTMLElement {
         this.selectedCubesColor = this.colorKit.selectedCubeColorValue ? this.colorKit.selectedCubeColorValue : "yellow"
         this.cubeHoverColor = this.colorKit.canvasOnHoverColorValue ? this.colorKit.canvasOnHoverColorValue : "red"
     }
-
-
     async submit() {
-        const selectedCubes = Array.from(this.shadowRoot.querySelectorAll('.cube')).filter(cube => cube.classList.contains('selected'));
+        const selectedCubes = Array.from(this.shadowRoot.querySelectorAll('.cube'))
+            .filter(cube => cube.classList.contains('selected'));
         const selectedIds = selectedCubes.map(cube => cube.id);
-        const countFields = this.shadowRoot.querySelector('.canvas').childElementCount;
-
-        fetch(`${CaptchaServerWithPort}/captcha/checkCubes`, {
+    
+        try {
+            const response = await fetch(`${CaptchaServerWithPort}/captcha/checkCubes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    selectedIds: selectedIds,
+                    clientData: this.clientData,
+                    apiKey: CaptchaHiddenAPIKey,
+                    session: await this.getSession()
+                })
+            });
+    
+            if (!response.ok) {
+                throw new Error('Server request failed.');
+            }
+    
+            const data = await response.json();
+            
+            if (data.isValid) {
+                alert("Validation successful!");
+                this.validateCaptcha(true);
+            } else {
+                alert("Validation failed. Please check your selection.");
+                this.validateCaptcha(false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again later.');
+        }
+    }
+    
+    async isCaptchaStillValid() {
+        const response = await fetch(`${CaptchaServerWithPort}/captcha/check-captcha`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ selectedIds: selectedIds, clientData: this.clientData, apiKey: CaptchaHiddenAPIKey, session: await this.getSession() })
-        })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    throw new Error('Fehler bei der Serveranfrage.');
-                }
+            body: JSON.stringify({
+                apiKey: CaptchaHiddenAPIKey,
+                session: await this.getSession()
             })
-            .then(data => {
-                if (data.isValid) {
-                    alert("Validierung erfolgreich!");
-                    var valid = true;
-                    this.validateCaptcha(data.isValid);
-
-                } else {
-                    alert("Validierung fehlgeschlagen. Bitte überprüfen Sie Ihre Auswahl.");
-                    this.validateCaptcha(data.isValid);
-
-                }
-            })
-            .catch(error => {
-                console.error('Fehler:', error);
-                alert('Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.');
-            });
-
+        });
+        const data = await response.json();
+        return data.valid;
     }
-
-    displayCaptchaAndSubmit(form) {
-        if (!this.captchaValidated) {
+    
+    async displayCaptchaAndSubmit(form) {
+        const isValid = await this.isCaptchaStillValid();
+        if (isValid) {
+            form.submit();
+        } else {
             this.displayCaptcha();
             this.addEventListener("captchaValidated", function () {
                 this.captchaValidated = true;
                 form.submit();
             }, { once: true });
+        }
+    }
+
+    async validateCaptcha(isValid) {
+        if (isValid) {
+            this.removeCaptcha();
+            const captchaEvent = new Event("captchaValidated");
+            this.captchaValidated = true;
+            this.dispatchEvent(captchaEvent);
         } else {
-            form.submit();
+            this.captchaFailed();
         }
     }
-
-    async validateCaptcha(data) {
-        if (data != null) {
-            if (data) {
-                this.removeCaptcha();
-                const captchaEvent = new Event("captchaValidated");
-                this.captchaValidated = true;
-                this.dispatchEvent(captchaEvent);
-
-            } else {
-                this.captchaFailed();
-            }
-        }
-    }
+    
 
     async getSession() {
         const sessionString = sessionStorage.getItem("session");
