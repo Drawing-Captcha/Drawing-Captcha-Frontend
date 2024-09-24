@@ -373,7 +373,6 @@ class CaptchaComponent extends HTMLElement {
 
     }
 
-
     displayCaptcha() {
         this.dialog.showModal();
     }
@@ -402,7 +401,7 @@ class CaptchaComponent extends HTMLElement {
     }
     async getAssets() {
         try {
-            const response = await fetch(`${CaptchaServerWithPort}/captcha/getAssets`, {
+            const response = await fetch(`${CaptchaServerWithPort}/captcha/assets`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
@@ -412,15 +411,15 @@ class CaptchaComponent extends HTMLElement {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.clientData) {
-                    this.clientData = data.clientData;
-                    this.assets = data;
+                if (data.client) {
+                    this.client  = data.client
+                    this.assets = data.client.itemAssets;
                     const backgroundImageUrl = this.assets.finishedURL;
                     const background = this.captchaCanvas;
-                    const itemAssets = this.assets.itemAssets
+                    const itemAssets = this.assets
                     background.style.backgroundImage = `url(${CaptchaServerWithPort}${backgroundImageUrl})`;
                     background.style.backgroundSize = `${itemAssets.backgroundSize}%`;
-                    this.saveSession(data.session);
+                    this.saveSession(data.client);
 
                     if(itemAssets.itemTitle.length > 0) {
                         this.captchaTitle.textContent = itemAssets.itemTitle;
@@ -493,7 +492,6 @@ class CaptchaComponent extends HTMLElement {
             console.error('Error fetching color kit:', error);
         }
     }
-
     async applyColorKitStylings() {
         this.colorKitTitle = this.colorKit.defaultTitle ? this.colorKit.defaultTitle : "Testing Verison"
         this.buttonColor = this.colorKit.buttonColorValue ? this.colorKit.buttonColorValue : "#007BFF"
@@ -501,8 +499,6 @@ class CaptchaComponent extends HTMLElement {
         this.selectedCubesColor = this.colorKit.selectedCubeColorValue ? this.colorKit.selectedCubeColorValue : "yellow"
         this.cubeHoverColor = this.colorKit.canvasOnHoverColorValue ? this.colorKit.canvasOnHoverColorValue : "red"
     }
-
-
     async submit() {
         const selectedCubes = Array.from(this.shadowRoot.querySelectorAll('.cube'))
             .filter(cube => cube.classList.contains('selected'));
@@ -542,7 +538,16 @@ class CaptchaComponent extends HTMLElement {
     }
     
     async isCaptchaStillValid() {
-        const response = await fetch(`${CaptchaServerWithPort}/captcha/check-captcha`);
+        const response = await fetch(`${CaptchaServerWithPort}/captcha/check-captcha`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                apiKey: CaptchaHiddenAPIKey,
+                session: await this.getSession()
+            })
+        });
         const data = await response.json();
         return data.valid;
     }
@@ -574,7 +579,6 @@ class CaptchaComponent extends HTMLElement {
 
     async getSession() {
         const sessionString = sessionStorage.getItem("session");
-        console.log("session: ", sessionString);
         if (sessionString) {
             return JSON.parse(sessionString);
         } else {
