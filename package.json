@@ -1,7 +1,7 @@
 {
   "name": "@drawing-captcha/drawing-captcha-frontend",
   "version": "1.0.0",
-  "description": "The Drawing Captcha Frontend is a dynamic interface designed to seamlessly integrate with the Drawing Captcha App. It allows clients to interact with the captcha system in a visually engaging and secure manner. By incorporating interactive drawing tasks, users are prompted to complete specific patterns or color in logos, which helps verify human users while promoting brand awareness.",
+  "description": "The Drawing Captcha Frontend is a dynamic interface...",
   "main": "captcha.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/Drawing-Captcha/Drawing-Captcha-Frontend/issues"
   },
-  "homepage": "https://github.com/Drawing-Captcha/Drawing-Captcha-Frontend#readme"
+  "homepage": "https://github.com/Drawing-Captcha/Drawing-Captcha-Frontend#readme",
+  "publishConfig": {
+    "access": "public"
+  }
 }
