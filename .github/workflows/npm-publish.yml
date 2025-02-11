@@ -1,12 +1,12 @@
 name: Node.js Package
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-    if: github.event.release.target_commitish == 'main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +16,6 @@ jobs:
       - run: npm ci
 
   publish-npm:
-    if: github.event.release.target_commitish == 'main'
     needs: build
     runs-on: ubuntu-latest
     steps:
