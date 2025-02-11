@@ -1,4 +1,5 @@
 function initializeCaptcha(formsWithCaptcha) {
+    console.log("server: ", CaptchaServerWithPort)
     document.body.appendChild(document.createElement("captcha-component"));
     const captchaComponent = document.querySelector("captcha-component");
     if (formsWithCaptcha?.tagName !== 'FORM') formsWithCaptcha = Array.from(document.querySelectorAll('form[drawing-captcha]'));
@@ -24,19 +25,22 @@ class CaptchaComponent extends HTMLElement {
         if (this.shouldRenderHTML()) {
             this.renderHTML()
             this.captchaTitle = this.shadowRoot.querySelector('.title')
-            this.getColorKit().then(()=>{
-                this.captchaTitle.textContent = this.colorKitTitle
-                this.customStyle.textContent += /* CSS */`
-                    :host {
-                        --drawing-captcha-cube-hovering-color: ${this.cubeHoverColor};
-                        --drawing-captcha-cube-selected-color: ${this.selectedCubesColor};
-                        --drawing-captcha-button-background-color: ${this.buttonColor};
-                        --drawing-captcha-button-hover-background-color: ${this.buttonHoverColor};
-                    }
-                `
+            this.testConnection().then((result) => {
+                if (result === true) {
+                    this.getColorKit().then(() => {
+                        this.captchaTitle.textContent = this.colorKitTitle
+                        this.customStyle.textContent += /* CSS */`
+                            :host {
+                                --drawing-captcha-cube-hovering-color: ${this.cubeHoverColor};
+                                --drawing-captcha-cube-selected-color: ${this.selectedCubesColor};
+                                --drawing-captcha-button-background-color: ${this.buttonColor};
+                                --drawing-captcha-button-hover-background-color: ${this.buttonHoverColor};
+                            }
+                        `
+                    });
+                    this.initialize();
+                }
             });
-            this.initialize();
-
         }
         console.log("Drawing-Captcha Connected")
         this.shadowRoot.querySelector(".close-button").addEventListener("click", () => this.removeCaptcha());
@@ -399,6 +403,34 @@ class CaptchaComponent extends HTMLElement {
         await this.getAssets();
         this.reset()
     }
+    async testConnection () {
+        const response = await fetch(`${CaptchaServerWithPort}/test/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ apiKey: CaptchaHiddenAPIKey })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log(data)
+            if (data.connection) {
+                console.log("Connected to server")
+                return true;
+            }
+            else {
+                console.log("Failed to connect to server")
+                return false;
+            }
+        }
+        else{            
+            if(response.type === 'cors') {
+                alert("Failed to connect to server: Origin not allowed with this apiKey")
+            }
+            return false;
+            throw new Error(`Failed to connect to server: ${response.status} ${response.statusText}`);
+        }
+    }
     async getAssets() {
         try {
             const response = await fetch(`${CaptchaServerWithPort}/captcha/assets`, {
@@ -579,6 +611,7 @@ class CaptchaComponent extends HTMLElement {
 
     async getSession() {
         const sessionString = sessionStorage.getItem("session");
+        console.log(sessionString)
         if (sessionString) {
             return JSON.parse(sessionString);
         } else {
