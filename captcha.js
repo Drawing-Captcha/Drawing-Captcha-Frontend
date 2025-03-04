@@ -395,10 +395,10 @@ class CaptchaComponent extends HTMLElement {
         }
     }
     async captchaFailed() {
-        await this.getColorKit();
-        await this.initialize();
+        await sessionStorage.removeItem('session');
+        await this.siteReload();
+        await this.resetCaptcha();
         this.removeCaptcha();
-        this.reset();
     }
 
     async resetCaptcha() {
