@@ -36,8 +36,8 @@ class CaptchaComponent extends HTMLElement {
                                 --drawing-captcha-button-hover-background-color: ${this.buttonHoverColor};
                             }
                         `
+                        this.initialize();
                     });
-                    this.initialize();
                 }
             });
         }
@@ -534,11 +534,7 @@ class CaptchaComponent extends HTMLElement {
                     background.style.backgroundImage = `url(${CaptchaServerWithPort}${backgroundImageUrl})`;
                     background.style.backgroundSize = `${itemAssets.backgroundSize}%`;
                     this.saveSession(data.client);
-
-                    if(itemAssets.itemTitle.length > 0) {
-                        this.captchaTitle.textContent = itemAssets.itemTitle;
-                    }
-    
+                    this.captchaTitle.textContent = itemAssets.itemTitle ?? this.colorKitTitle;
                 } else {
                     throw new Error('Error in server response: Missing client data.');
                 }
