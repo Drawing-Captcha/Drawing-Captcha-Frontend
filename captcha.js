@@ -405,38 +405,42 @@ class CaptchaComponent extends HTMLElement {
         await this.getAssets();
         this.reset()
     }
-    async testConnection () {
-        const response = await fetch(`${CaptchaServerWithPort}/test/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ apiKey: CaptchaHiddenAPIKey })
-        });
-        if (response.ok) {
-            const data = await response.json();
-            if (data.connection) {
-                console.log("Connected to server")
-                return true;
-            }
-            else {
-                console.log("Failed to connect to server")
-                return false;
-            }
-        }
-        else{            
-            if(response.type === 'cors') {
-                console.log("Failed to connect to server: Origin not allowed with this apiKey | Drawing-Captcha disconnected")
+    async testConnection() {
+        try {
+            const response = await fetch(`${CaptchaServerWithPort}/test/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ apiKey: CaptchaHiddenAPIKey })
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                if (data.connection) {
+                    console.log("Connected to server");
+                    return true;
+                } else {
+                    console.log("Failed to connect to server");
+                    return false;
+                }
+            } else {
+                let errorMessage = `Failed to connect to server: ${response.status} ${response.statusText}`;
+                if (response.type === 'cors') {
+                    errorMessage += " | Origin not allowed with this apiKey | Drawing-Captcha disconnected";
+                }
+                console.error(errorMessage);
                 this.showConnectionError();
                 return false;
-
             }
+        } catch (error) {
+            console.error("Error during connection test:", error.message);
+            this.showConnectionError();
             return false;
-            throw new Error(`Failed to connect to server: ${response.status} ${response.statusText}`);
         }
     }
-
-
+    
+    
     async showConnectionError() {
         const dialog = document.createElement('dialog');
         dialog.classList.add('connection-error-dialog');
