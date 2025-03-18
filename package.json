@@ -1,6 +1,6 @@
 {
   "name": "@drawing-captcha/drawing-captcha-frontend",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "The Drawing Captcha Frontend is a dynamic interface...",
   "main": "captcha.js",
   "scripts": {
