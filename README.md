@@ -4,7 +4,17 @@ Welcome to the Drawing-Captcha Frontend project! This repository provides the ne
 
 ## Installation
 
-To get started, you need to install the Drawing-Captcha Frontend package via npm:
+### Option 1: Usage with CDN
+
+For a quick and easy integration, you can use the Drawing-Captcha frontend via our CDN. This eliminates the need to install the package locally via npm. Simply add the following script tag to your HTML file:
+
+```html
+<script src="https://cdn.drawing-captcha.com/captcha.js"></script>
+```
+
+### Option 2: Installation via npm
+
+If you prefer to manage the Drawing-Captcha frontend locally within your project, you can install it via npm. Run the following command in your project console:
 
 ```bash
 npm i @drawing-captcha/drawing-captcha-frontend
