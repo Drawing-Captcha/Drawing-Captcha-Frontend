@@ -1,9 +1,10 @@
 function initializeCaptcha(formsWithCaptcha) {
-    document.body.appendChild(document.createElement("captcha-component"));
-    const captchaComponent = document.querySelector("captcha-component");
     if (formsWithCaptcha?.tagName !== 'FORM') formsWithCaptcha = Array.from(document.querySelectorAll('form[drawing-captcha]'));
     if (!Array.isArray(formsWithCaptcha)) formsWithCaptcha = [formsWithCaptcha]
-
+    if (formsWithCaptcha.length > 0) {
+        document.body.appendChild(document.createElement("captcha-component"));
+        const captchaComponent = document.querySelector("captcha-component");
+    }
     formsWithCaptcha.forEach(form => {
         form.addEventListener("submit", function (event) {
             event.preventDefault();
@@ -461,6 +462,7 @@ class CaptchaComponent extends HTMLElement {
                 display: inline-block;
                 margin-top: 10px;
                 color: #007bff;
+
                 text-decoration: none;
                 font-weight: bold;
             }
@@ -480,12 +482,26 @@ class CaptchaComponent extends HTMLElement {
             .connection-error-dialog button:hover {
                 background-color: #0056b3;
             }
+            .connection-status {
+                margin-top: 20px;
+                font-size: 1em;
+                font-weight: bold;
+            }
+            .online {
+                color: green;
+            }
+            .offline {
+                color: red;
+            }
         `;
         document.head.appendChild(style);
 
         const message = document.createElement('div');
         message.innerHTML = `
             <p><strong>Drawing-Captcha Connection Error</strong></p>
+             <div class="connection-status ${navigator.onLine ? 'online' : 'offline'}">
+                Internet Connection: ${navigator.onLine ? 'Online' : 'Offline'}
+            </div>
             <p>Failed to connect to the server. Please check your internet connection or API Key and try again.</p>
             <button>Close</button>
             <a href="https://docs.drawing-captcha.com/documentation/apis/" target="_blank">Troubleshooting</a>
@@ -499,6 +515,15 @@ class CaptchaComponent extends HTMLElement {
         dialog.appendChild(message);
         document.body.appendChild(dialog);
         dialog.showModal();
+
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        function updateConnectionStatus() {
+            const statusDiv = dialog.querySelector('.connection-status');
+            statusDiv.textContent = `Internet Connection: ${navigator.onLine ? 'Online' : 'Offline'}`;
+            statusDiv.className = `connection-status ${navigator.onLine ? 'online' : 'offline'}`;
+        }
     }
     async getAssets() {
         try {
