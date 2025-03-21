@@ -4,13 +4,13 @@ function initializeCaptcha(formsWithCaptcha) {
     if (formsWithCaptcha.length > 0) {
         document.body.appendChild(document.createElement("captcha-component"));
         const captchaComponent = document.querySelector("captcha-component");
-    }
-    formsWithCaptcha.forEach(form => {
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            captchaComponent.displayCaptchaAndSubmit(form);
+        formsWithCaptcha.forEach(form => {
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                captchaComponent.displayCaptchaAndSubmit(form);
+            })
         })
-    })
+    }
 }
 
 class CaptchaComponent extends HTMLElement {
@@ -331,7 +331,7 @@ class CaptchaComponent extends HTMLElement {
         template.innerHTML = /* HTML */ `
         <div class="captcha-wrapper">
         <div class="captcha-container">
-        <div class="close-button">×</div>
+        <div class="close-button">Ã—</div>
         <h1 class="title">Loading...</h1>
         <div class="captchta-canvas">
             <div class="background-pattern">
