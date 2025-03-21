@@ -1,6 +1,6 @@
-# Drawing-Captcha Frontend
+# How to integrate the Drawing-Captcha Frontend
 
-Welcome to the Drawing-Captcha Frontend project! This repository provides the necessary frontend components to integrate the Drawing-Captcha system into your web forms. This README will guide you through the installation and implementation process.
+Learn how to integrate Drawing-Captcha into your web forms. Enhance security and user experience with our easy-to-follow guide on installation, configuration, and usage. Discover features like customizable patterns, responsive design, and seamless integration. Perfect for developers looking to add innovative captcha solutions to their projects.
 
 ## Installation
 
