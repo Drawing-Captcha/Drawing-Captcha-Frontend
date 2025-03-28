@@ -331,7 +331,7 @@ class CaptchaComponent extends HTMLElement {
         template.innerHTML = /* HTML */ `
         <div class="captcha-wrapper">
         <div class="captcha-container">
-        <div class="close-button">Ã—</div>
+        <div class="close-button">X</div>
         <h1 class="title">Loading...</h1>
         <div class="captchta-canvas">
             <div class="background-pattern">
